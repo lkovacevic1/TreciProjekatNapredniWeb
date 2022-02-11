@@ -19,6 +19,7 @@ public class JwtUtil {
     }
 
     public String extractUsername(String token){
+        System.out.println("User name iz tokena je: " + extractAllClaims(token).getSubject());
         return extractAllClaims(token).getSubject();
     }
 

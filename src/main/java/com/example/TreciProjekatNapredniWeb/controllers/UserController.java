@@ -1,5 +1,6 @@
 package com.example.TreciProjekatNapredniWeb.controllers;
 
+import com.example.TreciProjekatNapredniWeb.model.Role;
 import com.example.TreciProjekatNapredniWeb.model.User;
 import com.example.TreciProjekatNapredniWeb.model.UserInfo;
 import com.example.TreciProjekatNapredniWeb.request.UserRequest;
@@ -12,10 +13,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import javax.websocket.server.PathParam;
-
+@CrossOrigin
 @RestController
 @RequestMapping("/api/user")
 public class UserController {
@@ -38,7 +39,7 @@ public class UserController {
             e.printStackTrace();
             return ResponseEntity.status(401).build();
         }
-        return ResponseEntity.ok(new UserResponse(jwtUtil.generateToken(userLogin.getMail())));
+        return ResponseEntity.ok(new UserResponse(jwtUtil.generateToken(userLogin.getMail()), userService.RolesForUser(userLogin.getMail())));
     }
 
     @GetMapping("/all")
@@ -52,15 +53,20 @@ public class UserController {
     }
 
     @PutMapping(value = "/update", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    private ResponseEntity<User> updateUser(@RequestBody User user){
+    private ResponseEntity<User> updateUser(@RequestBody UserInfo user){
         User updateUser = userService.updateUser(user);
         return new ResponseEntity<>(updateUser, HttpStatus.OK);
     }
 
     @DeleteMapping(value = "/delete/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     private ResponseEntity<?> deleteUser(@PathVariable("id") Long id){
-        System.out.println("Id za brisanje je: " + id);
         userService.deleteUser(id);
         return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/roles", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    private ResponseEntity<Role[]> getRoles(@RequestHeader("Authorization") String authorization){
+        String jwt = authorization.substring("Bearer ".length());
+        return ResponseEntity.ok().body(userService.RolesForUser(jwtUtil.extractUsername(jwt)));
     }
 }

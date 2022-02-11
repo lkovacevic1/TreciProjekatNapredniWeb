@@ -24,7 +24,7 @@ public class User {
     private String mail;
     @Column(nullable = false)
     private String password;
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ManyToMany(fetch = FetchType.EAGER)
     private Collection<Role> roles = new ArrayList<>();
 
     public User(Long id, String name, String lastName, String mail, String password){
