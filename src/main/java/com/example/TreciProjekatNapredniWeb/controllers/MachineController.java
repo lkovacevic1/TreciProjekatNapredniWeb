@@ -3,7 +3,7 @@ package com.example.TreciProjekatNapredniWeb.controllers;
 import com.example.TreciProjekatNapredniWeb.model.Machine;
 import com.example.TreciProjekatNapredniWeb.model.ScheduleMachine;
 import com.example.TreciProjekatNapredniWeb.model.User;
-import com.example.TreciProjekatNapredniWeb.model.enums.Status;
+import com.example.TreciProjekatNapredniWeb.repositories.UserRepository;
 import com.example.TreciProjekatNapredniWeb.response.MachineResponse;
 import com.example.TreciProjekatNapredniWeb.services.UserService;
 import com.example.TreciProjekatNapredniWeb.utils.JwtUtil;
@@ -24,10 +24,12 @@ public class MachineController {
 
     private final UserService userService;
     private final JwtUtil jwtUtil;
+    private final UserRepository userRepository;
 
-    public MachineController(UserService userService, JwtUtil jwtUtil) {
+    public MachineController(UserService userService, JwtUtil jwtUtil, UserRepository userRepository) {
         this.userService = userService;
         this.jwtUtil = jwtUtil;
+        this.userRepository = userRepository;
     }
 
     @GetMapping(value="/all", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -58,18 +60,24 @@ public class MachineController {
     @PutMapping(value = "/start/{id}")
     public ResponseEntity<?> startMachine(@PathVariable Long id){
         MachineResponse machineResponse = userService.callStartMachine(id);
+        if(machineResponse.getStatus() == HttpStatus.OK)
+            return ResponseEntity.ok().build();
         return ResponseEntity.status(machineResponse.getStatus()).body(machineResponse.getResponse());
     }
 
     @PutMapping(value = "/stop/{id}")
     public ResponseEntity<?> stopMachine(@PathVariable Long id){
         MachineResponse machineResponse = userService.callStopMachine(id);
+        if(machineResponse.getStatus() == HttpStatus.OK)
+            return ResponseEntity.ok().build();
         return ResponseEntity.status(machineResponse.getStatus()).body(machineResponse.getResponse());
     }
 
     @PutMapping(value = "/restart/{id}")
     public ResponseEntity<?> restartMachine(@PathVariable Long id){
         MachineResponse machineResponse = userService.callRestartMachine(id);
+        if(machineResponse.getStatus() == HttpStatus.OK)
+            return ResponseEntity.ok().build();
         return ResponseEntity.status(machineResponse.getStatus()).body(machineResponse.getResponse());
     }
 
@@ -77,5 +85,13 @@ public class MachineController {
     public ResponseEntity<?> scheduleMachine(@PathVariable Long id, @RequestBody ScheduleMachine scheduleMachine) throws ParseException {
         userService.scheduleMachine(id, scheduleMachine.getDate(), scheduleMachine.getTime(), scheduleMachine.getAction());
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping(value="/errorHistory")
+    public ResponseEntity<?> historyError(@RequestHeader("Authorization") String authorization){
+        String jwt = authorization.substring("Bearer ".length());
+        String mail = jwtUtil.extractUsername(jwt);
+        User user = userRepository.findByMail(mail);
+        return  ResponseEntity.ok().body(userService.getErrorsForUser(user));
     }
 }

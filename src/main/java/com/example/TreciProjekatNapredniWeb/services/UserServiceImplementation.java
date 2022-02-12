@@ -1,11 +1,9 @@
 package com.example.TreciProjekatNapredniWeb.services;
 
 import com.example.TreciProjekatNapredniWeb.mapper.UserMapper;
-import com.example.TreciProjekatNapredniWeb.model.Machine;
-import com.example.TreciProjekatNapredniWeb.model.Role;
-import com.example.TreciProjekatNapredniWeb.model.User;
-import com.example.TreciProjekatNapredniWeb.model.UserInfo;
+import com.example.TreciProjekatNapredniWeb.model.*;
 import com.example.TreciProjekatNapredniWeb.model.enums.Status;
+import com.example.TreciProjekatNapredniWeb.repositories.ErrorHistoryRepository;
 import com.example.TreciProjekatNapredniWeb.repositories.MachineRepository;
 import com.example.TreciProjekatNapredniWeb.repositories.RoleRepository;
 import com.example.TreciProjekatNapredniWeb.repositories.UserRepository;
@@ -13,15 +11,16 @@ import com.example.TreciProjekatNapredniWeb.response.MachineResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -33,14 +32,16 @@ public class UserServiceImplementation implements UserService{
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
     private final TaskScheduler taskScheduler;
+    private final ErrorHistoryRepository errorHistoryRepository;
 
-    public UserServiceImplementation(TaskScheduler taskScheduler, UserRepository userRepo, RoleRepository roleRepo, MachineRepository machineRepository, PasswordEncoder passwordEncoder, UserMapper userMapper) {
+    public UserServiceImplementation(TaskScheduler taskScheduler, UserRepository userRepo, RoleRepository roleRepo, MachineRepository machineRepository, PasswordEncoder passwordEncoder, UserMapper userMapper, ErrorHistoryRepository errorHistoryRepository) {
         this.userRepository = userRepo;
         this.roleRepository = roleRepo;
         this.machineRepository = machineRepository;
         this.passwordEncoder = passwordEncoder;
         this.userMapper = userMapper;
         this.taskScheduler = taskScheduler;
+        this.errorHistoryRepository = errorHistoryRepository;
     }
 
     @Override
@@ -162,7 +163,6 @@ public class UserServiceImplementation implements UserService{
     @Override
     @Async
     public void startMachine(Machine machine) {
-        System.out.println("Udje u start machine");
         if(machine.getStatus().equals(Status.STOPPED)){
             if(machine.isUsed()){
                 return;
@@ -236,14 +236,20 @@ public class UserServiceImplementation implements UserService{
         this.taskScheduler.schedule(() -> {
             if(action.equals("Start")){
                 MachineResponse machineResponse = callStartMachine(id);
-//                if(machineResponse.getStatus() != HttpStatus.OK){
-//
-//                }
+                if(machineResponse.getStatus() != HttpStatus.OK){
+                    addToErrorHistory(id, new java.sql.Timestamp(date1.getTime()).toLocalDateTime(), action, machineResponse.getResponse());
+                }
             }
             else if(action.equals("Stop")){
-                callStopMachine(id);
+                MachineResponse machineResponse = callStopMachine(id);
+                if(machineResponse.getStatus() != HttpStatus.OK){
+                    addToErrorHistory(id, new java.sql.Timestamp(date1.getTime()).toLocalDateTime(), action, machineResponse.getResponse());
+                }
             }else{
-                callRestartMachine(id);
+                MachineResponse machineResponse = callRestartMachine(id);
+                if(machineResponse.getStatus() != HttpStatus.OK){
+                    addToErrorHistory(id, new java.sql.Timestamp(date1.getTime()).toLocalDateTime(), action, machineResponse.getResponse());
+                }
             }
         }, date1);
     }
@@ -300,5 +306,18 @@ public class UserServiceImplementation implements UserService{
             e.printStackTrace();
             return new MachineResponse("Machine is being used", HttpStatus.BAD_REQUEST);
         }
+    }
+
+    @Override
+    public void addToErrorHistory(Long id, LocalDateTime date, String action, String message) {
+        Machine machine = machineRepository.findMachineById(id);
+        ErrorHistroy errorHistroy = new ErrorHistroy(null, date, action, message, machine);
+        errorHistoryRepository.save(errorHistroy);
+    }
+
+
+    @Override
+    public ErrorHistroy[] getErrorsForUser(User user) {
+        return this.errorHistoryRepository.findAllByMachine_CreatedBy(user);
     }
 }

@@ -1,14 +1,12 @@
 package com.example.TreciProjekatNapredniWeb.services;
 
-import com.example.TreciProjekatNapredniWeb.model.Machine;
-import com.example.TreciProjekatNapredniWeb.model.Role;
-import com.example.TreciProjekatNapredniWeb.model.User;
-import com.example.TreciProjekatNapredniWeb.model.UserInfo;
+import com.example.TreciProjekatNapredniWeb.model.*;
 import com.example.TreciProjekatNapredniWeb.response.MachineResponse;
 import org.springframework.data.domain.Page;
 
 import java.text.ParseException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,10 +32,12 @@ public interface UserService {
     void startMachine(Machine machine);
     void stopMachine(Machine machine);
     void restartMachine(Machine machine);
-
     void scheduleMachine(Long id, String date, String time, String action) throws ParseException;
-
     MachineResponse callStartMachine(Long id);
     MachineResponse callStopMachine(Long id);
     MachineResponse callRestartMachine(Long id);
+
+    //Error history
+    void addToErrorHistory(Long id, LocalDateTime date, String action, String message);
+    ErrorHistroy[] getErrorsForUser(User user);
 }
