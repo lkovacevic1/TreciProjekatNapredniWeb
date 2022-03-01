@@ -58,6 +58,7 @@ public class BootstrapData implements CommandLineRunner {
         userService.addRoleToUser("lkovacevic@raf.rs", "can_create_machines");
         userService.addRoleToUser("lkovacevic@raf.rs", "can_read_machines");
 
+
         userService.addRoleToUser("agasic@raf.rs", "can_read_users");
         userService.addRoleToUser("agasic@raf.rs", "can_update_users");
         userService.addRoleToUser("sbudimac@raf.rs", "can_delete_users");

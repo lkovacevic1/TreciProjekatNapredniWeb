@@ -125,6 +125,7 @@ public class UserServiceImplementation implements UserService{
 
     @Override
     public List<Machine> getMachines(String username) {
+        System.out.println("Username za masine je: " + username);
         User user = userRepository.findByMail(username);
         return machineRepository.allMachinesByUser(user);
     }
@@ -168,8 +169,7 @@ public class UserServiceImplementation implements UserService{
                 return;
             }else{
                 machine.setUsed(true);
-                machineRepository.save(machine);
-                machine.setVersion(machine.getVersion() + 1);
+                machine = machineRepository.save(machine);
                 try{
                     Thread.sleep(10000);
                 }catch (Exception e){}
@@ -188,8 +188,7 @@ public class UserServiceImplementation implements UserService{
                 return;
             }else{
                 machine.setUsed(true);
-                machineRepository.save(machine);
-                machine.setVersion(machine.getVersion() + 1);
+                machine = machineRepository.save(machine);
                 try{
                     Thread.sleep(10000);
                 }catch (Exception e){
@@ -216,8 +215,7 @@ public class UserServiceImplementation implements UserService{
                     e.printStackTrace();
                 }
                 machine.setStatus(Status.STOPPED);
-                machineRepository.save(machine);
-                machine.setVersion(machine.getVersion() + 1);
+                machine = machineRepository.save(machine);
                 try{
                     Thread.sleep(5000);
                 }catch (Exception e){

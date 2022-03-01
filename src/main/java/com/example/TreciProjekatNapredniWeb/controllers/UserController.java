@@ -39,6 +39,7 @@ public class UserController {
             e.printStackTrace();
             return ResponseEntity.status(401).build();
         }
+        System.out.println(jwtUtil.generateToken(userLogin.getMail()));
         return ResponseEntity.ok(new UserResponse(jwtUtil.generateToken(userLogin.getMail()), userService.RolesForUser(userLogin.getMail())));
     }
 
